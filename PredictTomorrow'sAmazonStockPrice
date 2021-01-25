@@ -1,0 +1,201 @@
+import requests
+import numpy as np
+import pandas as pd
+import datetime
+import time
+import matplotlib.pyplot as plt
+import matplotlib
+
+import yfinance as yf
+
+AMZN = yf.Ticker("AMZN")
+# get historical market data
+amz_df = AMZN.history(period="357d")
+amz_df=amz_df.reset_index()
+amz_df = amz_df.reset_index()
+#amz_df.set_index('Date',inplace=True)
+#amz_df
+amz_df.columns = ['i','t', 'o', 'h', 'l', 'c', 'v', 'd', 'ss']
+#amz_df
+
+amz_df.t = amz_df.t.apply(lambda x:x.date())
+
+def yes_changeP_calc(row):
+    if(row.i - 2 < 0):
+        return np.nan
+    else:
+        yest_c = amz_df.iloc[row.i-1].c
+        thedaybef_yesterday_c = amz_df.iloc[row.i-2].c
+        return ((yest_c-thedaybef_yesterday_c)/thedaybef_yesterday_c*100)
+    
+amz_df['yes_changeP'] = amz_df.apply(yes_changeP_calc,axis=1)
+
+def lastweek_changeP_calc(row):
+    if(row.i - 8 <0):
+        return np.nan
+    else:
+        yesterday_c = amz_df.iloc[row.i-1].c
+        lastweek_c = amz_df.iloc[row.i-8].c
+        return ((yesterday_c-lastweek_c)/lastweek_c*100)
+
+amz_df['lastweek_changeP'] = amz_df.apply(lastweek_changeP_calc,axis=1)
+
+def today_changeP_calc(row):
+    if(row.i - 1 < 0):
+        return np.nan
+    else:
+        today_c = amz_df.iloc[row.i].c
+        yesterday_c = amz_df.iloc[row.i-1].c
+        return ((today_c-yesterday_c)/yesterday_c*100)
+    
+amz_df['today_changeP'] = amz_df.apply(today_changeP_calc,axis=1)
+
+amz_df.set_index('t', inplace=True)
+#amz_df
+
+Nasdaq = yf.Ticker("^NDX")
+
+# get historical market data
+nasdaq_df = Nasdaq.history(period="357d")
+
+nasdaq_df=nasdaq_df.reset_index()
+nasdaq_df = nasdaq_df.reset_index()
+#nasdaq_df.set_index('Date',inplace=True)
+#nasdaq_df
+
+nasdaq_df.columns = ['i','t', 'o', 'h', 'l', 'c', 'v', 'd', 'ss']
+#nasdaq_df
+
+nasdaq_df.t = nasdaq_df.t.apply(lambda x:x.date())
+
+def yes_changeP_calc(row):
+    if(row.i - 2 < 0):
+        return np.nan
+    else:
+        yest_c = nasdaq_df.iloc[row.i-1].c
+        thedaybef_yesterday_c = nasdaq_df.iloc[row.i-2].c
+        return ((yest_c-thedaybef_yesterday_c)/thedaybef_yesterday_c*100)
+
+def lastweek_changeP_calc(row):
+    if(row.i - 8 <0):
+        return np.nan
+    else:
+        yesterday_c = nasdaq_df.iloc[row.i-1].c
+        lastweek_c = nasdaq_df.iloc[row.i-8].c
+        return ((yesterday_c-lastweek_c)/lastweek_c*100)
+
+nasdaq_df['yes_changeP'] = nasdaq_df.apply(yes_changeP_calc,axis=1)
+nasdaq_df['lastweek_changeP'] = nasdaq_df.apply(lastweek_changeP_calc,axis=1)
+nasdaq_df.set_index('t', inplace=True)
+#nasdaq_df
+
+nasdaq_df.drop(columns=['i','o', 'h', 'l', 'c', 'v', 'd', 'ss'],inplace=True)
+nasdaq_df.columns = ['nasdaq_yes_changeP','nasdaq_lastweek_changeP']
+#nasdaq_df
+
+Dow = yf.Ticker("^DJI")
+
+# get historical market data
+dow_df = Dow.history(period="357d")
+
+dow_df=dow_df.reset_index()
+dow_df = dow_df.reset_index()
+#dow_df.set_index('Date',inplace=True)
+dow_df.columns = ['i','t', 'o', 'h', 'l', 'c', 'v', 'd', 'ss']
+#dow_df
+
+dow_df.t = dow_df.t.apply(lambda x:x.date())
+
+def yes_changeP_calc(row):
+    if(row.i - 2 < 0):
+        return np.nan
+    else:
+        yest_c = dow_df.iloc[row.i-1].c
+        thedaybef_yesterday_c = dow_df.iloc[row.i-2].c
+        return ((yest_c-thedaybef_yesterday_c)/thedaybef_yesterday_c*100)
+
+
+def lastweek_changeP_calc(row):
+    if(row.i - 8 <0):
+        return np.nan
+    else:
+        yesterday_c = dow_df.iloc[row.i-1].c
+        lastweek_c = dow_df.iloc[row.i-8].c
+        return ((yesterday_c-lastweek_c)/lastweek_c*100)
+    
+dow_df['yes_changeP'] = dow_df.apply(yes_changeP_calc,axis=1)
+dow_df['lastweek_changeP'] = dow_df.apply(lastweek_changeP_calc,axis=1)
+dow_df.set_index('t', inplace=True)
+#dow_df
+
+dow_df.drop(columns=['i','o', 'h', 'l', 'c', 'v', 'd', 'ss'],inplace=True)
+dow_df.columns = ['dow_yes_changeP','dow_lastweek_changeP']
+#dow_df
+
+integrate_df = amz_df.join(dow_df)
+integrate_df = integrate_df.join(nasdaq_df)
+integrate_df.drop(columns = ['i','o', 'h', 'l', 'c', 'v', 'd', 'ss'],inplace=True)
+integrate_df.dropna(inplace=True)
+integrate_df = integrate_df[['yes_changeP', 'lastweek_changeP', 'dow_yes_changeP',
+       'dow_lastweek_changeP', 'nasdaq_yes_changeP',
+       'nasdaq_lastweek_changeP', 'today_changeP']]
+integrate_df
+
+# Today
+AMZN = yf.Ticker("AMZN")
+# get historical market data
+amz_df = AMZN.history(period="8d")
+amz_df
+
+Yes_changeP = (amz_df.iloc[7].Close-amz_df.iloc[6].Close)/amz_df.iloc[6].Close*100
+Lastweek_changeP = (amz_df.iloc[7].Close-amz_df.iloc[1].Close)/amz_df.iloc[1].Close*100
+
+Dow = yf.Ticker("^DJI")
+
+# get historical market data
+dow_df = Dow.history(period="8d")
+
+Dow_yes_changeP = (dow_df.iloc[7].Close-dow_df.iloc[6].Close)/dow_df.iloc[6].Close*100
+Dow_lastweek_changeP = (dow_df.iloc[7].Close-dow_df.iloc[1].Close)/dow_df.iloc[1].Close*100
+
+Nasdaq = yf.Ticker("^NDX")
+
+# get historical market data
+nasdaq_df = Nasdaq.history(period="8d")
+
+Nasdaq_yes_changeP = (nasdaq_df.iloc[7].Close-nasdaq_df.iloc[6].Close)/nasdaq_df.iloc[6].Close*100
+Nasdaq_lastweek_changeP = (nasdaq_df.iloc[7].Close-nasdaq_df.iloc[1].Close)/nasdaq_df.iloc[1].Close*100
+
+to_add = pd.Series ({'yes_changeP':Yes_changeP,
+            'lastweek_changeP':Lastweek_changeP,
+            'dow_yes_changeP':Dow_yes_changeP, 
+            'dow_lastweek_changeP':Dow_lastweek_changeP,
+            'nasdaq_yes_changeP':Nasdaq_yes_changeP,
+            'nasdaq_lastweek_changeP':Nasdaq_lastweek_changeP,
+            'today_changeP':np.nan},name ='Tomorrow' )
+
+to_predict = pd.Series ({'yes_changeP':Yes_changeP,
+            'lastweek_changeP':Lastweek_changeP,
+            'dow_yes_changeP':Dow_yes_changeP, 
+            'dow_lastweek_changeP':Dow_lastweek_changeP,
+            'nasdaq_yes_changeP':Nasdaq_yes_changeP,
+            'nasdaq_lastweek_changeP':Nasdaq_lastweek_changeP},name ='Tomorrow' )
+
+integrate_df = integrate_df.append(to_add)
+
+X = ['yes_changeP', 'lastweek_changeP', 'dow_yes_changeP',
+       'dow_lastweek_changeP', 'nasdaq_yes_changeP',
+      'nasdaq_lastweek_changeP']
+
+Y = 'today_changeP'
+
+Data_X = integrate_df.dropna()[X]
+Data_Y = integrate_df.dropna()[Y]
+
+from sklearn.linear_model import LinearRegression
+
+car_lm = LinearRegression()
+car_lm.fit(Data_X, Data_Y)
+
+pred_y = car_lm.predict(Data_X)
+car_lm.predict(pd.DataFrame(to_predict).transpose())
